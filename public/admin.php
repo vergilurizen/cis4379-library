@@ -1,4 +1,7 @@
-<?php include 'config.php'; ?>
+<?php 
+include 'config.php';
+include 'lib/database_functions.php';
+?>
 <!doctype html>
 <html>
 <head>
@@ -18,9 +21,13 @@
     $author = $_POST['author'];
     $category = $_POST['category'];
 
-    $sql = "INSERT INTO materials (title, author, category) VALUES ('$title', '$author', '$category')";
-    if (mysqli_query($conn, $sql)) {
-      echo "<p style='color:green;'>Material added successfully!</p>";
+    // Call shared database function directly - no cURL!
+    $response = db_add_material($title, $author, $category, $conn);
+
+    if ($response['success']) {
+      echo "<p style='color:green;'>" . htmlspecialchars($response['message']) . "</p>";
+    } else {
+      echo "<p style='color:red;'>" . htmlspecialchars($response['message']) . "</p>";
     }
   }
   ?>
@@ -40,16 +47,29 @@
   <table class="table">
     <tr><th>ID</th><th>Title</th><th>Author</th><th>Category</th></tr>
     <?php
-    $result = mysqli_query($conn, "SELECT * FROM materials");
-    while ($row = mysqli_fetch_assoc($result)) {
-      echo "<tr><td>{$row['id']}</td><td>{$row['title']}</td><td>{$row['author']}</td><td>{$row['category']}</td></tr>";
+    // Call shared database function directly - no cURL!
+    $response = db_get_materials($conn, false); // false = get all
+    
+    if ($response['success'] && !empty($response['data'])) {
+      foreach ($response['data'] as $material) {
+        echo "<tr>";
+        echo "<td>" . htmlspecialchars($material['id']) . "</td>";
+        echo "<td>" . htmlspecialchars($material['title']) . "</td>";
+        echo "<td>" . htmlspecialchars($material['author']) . "</td>";
+        echo "<td>" . htmlspecialchars($material['category']) . "</td>";
+        echo "</tr>";
+      }
+    } else {
+      echo "<tr><td colspan='4'>No materials found</td></tr>";
     }
     ?>
   </table>
 
-  <form method="get" action="export_csv.php">
+  <form method="get" action="export.php">
     <button type="submit">Export to CSV</button>
   </form>
+  
+  <p><a href="catalog.php">← Back to Catalog</a></p>
 </div>
 </body>
 </html>

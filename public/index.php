@@ -1,4 +1,7 @@
-<?php include 'config.php'; ?>
+<?php 
+include 'config.php';
+include 'lib/database_functions.php';
+?>
 <!doctype html>
 <html>
 <head>
@@ -14,16 +17,14 @@
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE username='$username' AND password='$password'";
-    $result = mysqli_query($conn, $sql);
+    // Call shared database function directly - no cURL!
+    $response = db_login($username, $password, $conn);
 
-    if (mysqli_num_rows($result) == 1) {
-      $row = mysqli_fetch_assoc($result);
-      $_SESSION['user'] = $row;
+    if ($response['success']) {
       header("Location: catalog.php");
       exit;
     } else {
-      echo "<p style='color:red;'>Invalid username or password.</p>";
+      echo "<p style='color:red;'>" . htmlspecialchars($response['message']) . "</p>";
     }
   }
   ?>
@@ -39,7 +40,7 @@
     <button type="submit">Login</button>
   </form>
 
-  <p>Don’t have an account? <a href="register.php">Register here</a></p>
+  <p>Don't have an account? <a href="register.php">Register here</a></p>
 </div>
 </body>
 </html>

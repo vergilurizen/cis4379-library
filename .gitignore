@@ -1,0 +1,30 @@
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and test files
+*.tmp
+*_test.php
+*_diagnostic.php
+test_*.php
+check_*.php
+
+# Plan files
+*.plan.md
+*.plan
+
+# Logs
+*.log
+
+# Database config (if it contains sensitive credentials)
+# Uncomment if needed:
+# public/config.php
+

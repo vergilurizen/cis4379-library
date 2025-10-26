@@ -1,4 +1,7 @@
-<?php include 'config.php'; ?>
+<?php 
+include 'config.php';
+include 'lib/database_functions.php';
+?>
 <!doctype html>
 <html>
 <head>
@@ -14,18 +17,13 @@
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $check = "SELECT * FROM users WHERE username='$username'";
-    $result = mysqli_query($conn, $check);
+    // Call shared database function directly - no cURL!
+    $response = db_register($username, $password, $conn);
 
-    if (mysqli_num_rows($result) > 0) {
-      echo "<p style='color:red;'>Username already exists. Please choose another.</p>";
+    if ($response['success']) {
+      echo "<p style='color:green;'>" . htmlspecialchars($response['message']) . " <a href='index.php'>Login here</a>.</p>";
     } else {
-      $insert = "INSERT INTO users (username, password, role) VALUES ('$username', '$password', 'user')";
-      if (mysqli_query($conn, $insert)) {
-        echo "<p style='color:green;'>Account created successfully! <a href='index.php'>Login here</a>.</p>";
-      } else {
-        echo "<p style='color:red;'>Error creating account: " . mysqli_error($conn) . "</p>";
-      }
+      echo "<p style='color:red;'>" . htmlspecialchars($response['message']) . "</p>";
     }
   }
   ?>

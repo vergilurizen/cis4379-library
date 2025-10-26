@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $host = "localhost";
 $user = "root";
 $pass = "root"; //change root/root if your creds for MAMP are different

@@ -1,5 +1,7 @@
 <?php
 include 'config.php';
+include 'lib/database_functions.php';
+
 if (!isset($_SESSION['user'])) {
   header("Location: index.php");
   exit;
@@ -22,9 +24,19 @@ if (!isset($_SESSION['user'])) {
   <table class="table">
     <tr><th>Title</th><th>Author</th><th>Category</th></tr>
     <?php
-    $result = mysqli_query($conn, "SELECT * FROM materials WHERE available=1");
-    while ($row = mysqli_fetch_assoc($result)) {
-      echo "<tr><td>{$row['title']}</td><td>{$row['author']}</td><td>{$row['category']}</td></tr>";
+    // Call shared database function directly - no cURL!
+    $response = db_get_materials($conn, true); // true = available only
+    
+    if ($response['success'] && !empty($response['data'])) {
+      foreach ($response['data'] as $material) {
+        echo "<tr>";
+        echo "<td>" . htmlspecialchars($material['title']) . "</td>";
+        echo "<td>" . htmlspecialchars($material['author']) . "</td>";
+        echo "<td>" . htmlspecialchars($material['category']) . "</td>";
+        echo "</tr>";
+      }
+    } else {
+      echo "<tr><td colspan='3'>No materials available</td></tr>";
     }
     ?>
   </table>
