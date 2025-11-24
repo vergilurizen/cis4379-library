@@ -11,24 +11,30 @@
 function db_login($username, $password, $conn) {
     $username = htmlspecialchars(strip_tags(trim($username)));
     
-    $sql = "SELECT * FROM users WHERE username='$username' AND password='$password'";
+    // *** NEW: only look up by username ***
+    $sql = "SELECT * FROM users WHERE username='$username'";
     $result = mysqli_query($conn, $sql);
-    
+
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
-        $_SESSION['user'] = $user;
-        return [
-            'success' => true,
-            'data' => $user,
-            'message' => 'Login successful'
-        ];
-    } else {
-        return [
-            'success' => false,
-            'data' => null,
-            'message' => 'Invalid username or password'
-        ];
+
+        // *** NEW: verify the entered password against the stored hash ***
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user'] = $user;
+            return [
+                'success' => true,
+                'data' => $user,
+                'message' => 'Login successful'
+            ];
+        }
     }
+
+    // If no user or password_verify fails:
+    return [
+        'success' => false,
+        'data' => null,
+        'message' => 'Invalid username or password'
+    ];
 }
 
 /**
@@ -48,9 +54,12 @@ function db_register($username, $password, $conn) {
             'message' => 'Username already exists'
         ];
     }
-    
+
+    // Hash the password for storing
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
     // Insert new user
-    $insert = "INSERT INTO users (username, password, role) VALUES ('$username', '$password', 'user')";
+    $insert = "INSERT INTO users (username, password, role) VALUES ('$username', '$hashedPassword', 'user')";
     if (mysqli_query($conn, $insert)) {
         return [
             'success' => true,
