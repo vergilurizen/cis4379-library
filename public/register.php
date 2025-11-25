@@ -1,6 +1,37 @@
 <?php 
 include 'config.php';
+include 'api/helpers.php';
 include 'lib/database_functions.php';
+
+$errors  = [];
+$message = "";
+
+// handle form submission
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $rawUsername = $_POST['username'] ?? '';
+    $rawPassword = $_POST['password'] ?? '';
+
+    $username = $rawUsername;
+    $password = $rawPassword;
+
+    // validate username and password
+    if (!validate_username($username, $err)) {
+        $errors[] = $err;
+    }
+    if (!validate_password($password, $err)) {
+        $errors[] = $err;
+    }
+
+    if (empty($errors)) {
+        $response = db_register($username, $password, $conn);
+
+        if ($response['success']) {
+            $message = $response['message'] ?? "Account created successfully. You can now log in.";
+        } else {
+            $errors[] = $response['message'] ?? "Error creating account.";
+        }
+    }
+}
 ?>
 <!doctype html>
 <html>
@@ -12,26 +43,28 @@ include 'lib/database_functions.php';
 <header><h1>Create a Library Account</h1></header>
 
 <div class="container">
-  <?php
-  if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+  <?php if (!empty($errors)): ?>
+    <div class="alert alert-error">
+      <?php foreach ($errors as $e): ?>
+        <p><?= htmlspecialchars($e) ?></p>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
 
-    // Call shared database function directly - no cURL!
-    $response = db_register($username, $password, $conn);
+  <?php if (!empty($message) && empty($errors)): ?>
+    <div class="alert alert-success">
+      <p><?= htmlspecialchars($message) ?></p>
+    </div>
+  <?php endif; ?>
 
-    if ($response['success']) {
-      echo "<p style='color:green;'>" . htmlspecialchars($response['message']) . " <a href='index.php'>Login here</a>.</p>";
-    } else {
-      echo "<p style='color:red;'>" . htmlspecialchars($response['message']) . "</p>";
-    }
-  }
-  ?>
-
-  <h2>Register</h2>
   <form method="post">
     <label>Username</label>
-    <input type="text" name="username" required>
+    <input 
+      type="text" 
+      name="username" 
+      required
+      value="<?= isset($rawUsername) ? htmlspecialchars($rawUsername) : '' ?>"
+    >
 
     <label>Password</label>
     <input type="password" name="password" required>
