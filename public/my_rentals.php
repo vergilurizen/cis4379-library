@@ -8,9 +8,8 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-$userId = (int)$_SESSION['user']['id'];
-
-$response = db_get_user_rentals($userId, $conn);
+// Use API endpoint to get user rentals
+$response = callAPI('rentals.php', 'GET');
 $rentals  = [];
 $error    = "";
 $message  = "";

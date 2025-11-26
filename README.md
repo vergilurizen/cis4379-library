@@ -107,11 +107,18 @@ All API endpoints return JSON in the format:
 
 ## Architecture
 
-The application uses a **shared functions architecture**:
+The application uses a **hybrid API architecture**:
 - `lib/database_functions.php` contains all database operations
-- Frontend pages include and call these functions directly
-- API endpoints also use the same functions but return JSON responses
-- No HTTP/cURL overhead between PHP components
+- `api/` folder contains REST API endpoints that use database functions and return JSON
+- Frontend pages use the `callAPI()` helper function which directly calls database functions
+- This provides API-like interface with direct-call performance (no HTTP overhead)
+- All responses follow the same JSON format: `{"success": true/false, "data": {...}, "message": "..."}`
+
+**Note:** The `callAPI()` function directly calls database functions instead of making HTTP requests because:
+- Frontend and API are on the same server (no HTTP needed)
+- Faster performance (no network overhead)
+- Simpler session handling (same PHP process)
+- The API endpoints still exist and can be used by external clients (JavaScript SPAs, mobile apps, etc.)
 
 ## Default Credentials
 

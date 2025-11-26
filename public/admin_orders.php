@@ -1,7 +1,7 @@
 <?php
 include 'config.php';
-include 'lib/database_functions.php';
 include 'api/helpers.php';
+include 'lib/database_functions.php';
 
 if (!isset($_SESSION['user'])) {
     header("Location: index.php");
@@ -23,7 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
     $rentalId  = (int)$_POST['rental_id'];
     $newStatus = $_POST['new_status'];
 
-    $resp = db_update_rental_status($rentalId, $newStatus, $conn);
+    // Use API endpoint to update rental status
+    $resp = callAPI('rentals.php', 'PUT', [
+        'rental_id' => $rentalId,
+        'status' => $newStatus
+    ]);
 
     if (!empty($resp['success'])) {
         $message = $resp['message'] ?? "Status updated.";
@@ -32,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
     }
 }
 
-// fetch all orders
-$response = db_get_all_rentals($conn);
+// Fetch all orders using API
+$response = callAPI('rentals.php?all=1', 'GET');
 $orders   = [];
 
 if (!empty($response['success'])) {

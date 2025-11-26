@@ -51,20 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     if (empty($_SESSION['cart'])) {
         $error = "Your cart is empty.";
     } else {
-        $response = db_rent_materials($userId, $_SESSION['cart'], $conn);
+        // Use API endpoint to rent materials
+        $response = callAPI('rentals.php', 'POST', ['material_ids' => $_SESSION['cart']]);
 
         if (!empty($response['success'])) {
-    $_SESSION['cart'] = [];
-    $message = ($response['message'] ?? "All items rented successfully. Please pick up your materials at the TAMUCT Library, located at 1001 Leadership Pl, WH-101, Killeen, TX 76549, United States.");
+            $_SESSION['cart'] = [];
+            $message = ($response['message'] ?? "All items rented successfully. Please pick up your materials at the TAMUCT Library, located at 1001 Leadership Pl, WH-101, Killeen, TX 76549, United States.");
         } else {
             $error = $response['message'] ?? "Some items could not be rented.";
         }
     }
 }
 
+// Get cart items using API
 $cartItems = [];
 foreach ($_SESSION['cart'] as $materialId) {
-    $resp = db_get_material($materialId, $conn);
+    $resp = callAPI('materials.php?id=' . intval($materialId), 'GET');
     if (!empty($resp['success']) && !empty($resp['data'])) {
         $cartItems[] = $resp['data'];
     }

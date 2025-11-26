@@ -1,5 +1,6 @@
 <?php 
 include 'config.php';
+include 'api/helpers.php';
 include 'lib/database_functions.php';
 ?>
 <!doctype html>
@@ -21,8 +22,12 @@ include 'lib/database_functions.php';
     $author = $_POST['author'];
     $category = $_POST['category'];
 
-    // Call shared database function directly - no cURL!
-    $response = db_add_material($title, $author, $category, $conn);
+    // Use API endpoint to add material
+    $response = callAPI('materials.php', 'POST', [
+      'title' => $title,
+      'author' => $author,
+      'category' => $category
+    ]);
 
     if ($response['success']) {
       echo "<p style='color:green;'>" . htmlspecialchars($response['message']) . "</p>";
@@ -47,8 +52,8 @@ include 'lib/database_functions.php';
   <table class="table">
     <tr><th>ID</th><th>Title</th><th>Author</th><th>Category</th></tr>
     <?php
-    // Call shared database function directly - no cURL!
-    $response = db_get_materials($conn, false); // false = get all
+    // Use API endpoint to get all materials
+    $response = callAPI('materials.php', 'GET');
     
     if ($response['success'] && !empty($response['data'])) {
       foreach ($response['data'] as $material) {

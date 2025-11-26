@@ -43,8 +43,13 @@ if (!isset($_SESSION['cart'])) {
       <th>Action</th>
     </tr>
     <?php
-      $response = db_get_materials($conn, true); // only available
-      if ($response['success'] && !empty($response['data'])) {
+      // Use API endpoint to get available materials
+      $response = callAPI('materials.php?available=1', 'GET');
+      
+      // Debug: Show error if API call failed
+      if (!$response['success']) {
+        echo "<tr><td colspan='4' style='color:red;'>Error: " . htmlspecialchars($response['message'] ?? 'Unknown error') . "</td></tr>";
+      } else if (!empty($response['data'])) {
         foreach ($response['data'] as $material) {
           echo "<tr>";
           echo "<td>" . htmlspecialchars($material['title']) . "</td>";
