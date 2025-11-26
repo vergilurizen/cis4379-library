@@ -71,4 +71,22 @@ function validate_password($password, &$error) {
     }
     return true;
 }
+
+/**
+ * Require admin access - sends JSON error and exits if not admin
+ */
+function requireAdmin() {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+        sendJSON(false, null, "Admin access required");
+    }
+}
+
+/**
+ * Require login - sends JSON error and exits if not logged in
+ */
+function requireLogin() {
+    if (!isset($_SESSION['user'])) {
+        sendJSON(false, null, "Authentication required");
+    }
+}
 ?>
