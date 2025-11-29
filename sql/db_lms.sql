@@ -31,23 +31,12 @@ CREATE TABLE `borrowed_materials` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `material_id` int(11) NOT NULL,
-  `borrowed_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `returned_at` datetime DEFAULT NULL,
+  `delivered_date` datetime DEFAULT NULL,
+  `due_date` datetime DEFAULT NULL,
+  `returned_date` datetime DEFAULT NULL,
   `borrowed_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status` varchar(20) NOT NULL DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `borrowed_materials`
---
-
-INSERT INTO `borrowed_materials` (`id`, `user_id`, `material_id`, `borrowed_at`, `returned_at`, `borrowed_date`, `status`) VALUES
-(1, 5, 1, '2025-11-24 18:36:36', NULL, '2025-11-24 18:36:36', 'Returned'),
-(2, 5, 2, '2025-11-24 19:10:59', NULL, '2025-11-24 19:10:59', 'Returned'),
-(3, 5, 3, '2025-11-24 19:39:12', NULL, '2025-11-24 19:39:12', 'Returned'),
-(4, 4, 4, '2025-11-24 20:10:58', NULL, '2025-11-24 20:10:58', 'Returned'),
-(5, 4, 5, '2025-11-24 20:12:16', NULL, '2025-11-24 20:12:16', 'Returned'),
-(6, 5, 4, '2025-11-24 20:21:56', NULL, '2025-11-24 20:21:56', 'Returned');
 
 -- --------------------------------------------------------
 
@@ -60,7 +49,7 @@ CREATE TABLE `materials` (
   `title` varchar(255) NOT NULL,
   `author` varchar(255) DEFAULT NULL,
   `category` varchar(100) DEFAULT NULL,
-  `available` tinyint(1) DEFAULT '1'
+  `available` tinyint(8) DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -68,11 +57,10 @@ CREATE TABLE `materials` (
 --
 
 INSERT INTO `materials` (`id`, `title`, `author`, `category`, `available`) VALUES
-(1, 'Test1', 'Test Author', 'Test Category', 0),
-(2, 'Test2', 'Book Author', 'Suspense', 0),
-(3, 'To Kill a MockingBird', 'Some Guy', 'xxx', 0),
-(4, 'rental', 'rental', 'rental', 1),
-(5, 'etertetret', 'ertererertert', 'eterterterte', 1);
+(1, 'Software Engineering', 'Roger S. Pressman', 'Textbook', 1),
+(2, 'Heartstopper', 'Joy Fielding', 'Mystery', 1),
+(3, 'BoxONE', 'NPH', 'Game', 1),
+(4, 'The Great Gatsby', 'F. Scott Fitzgerald', 'Tragedy', 1);
 
 -- --------------------------------------------------------
 
@@ -98,6 +86,9 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `email` varchar(256),
   `role` enum('user','admin') DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -105,9 +96,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
-(4, 'admin', '$2y$10$5JvOJ9nU.YJUTaLQngxFfuSEWzexstc3et5W333J9d8YHyb2257Ua', 'admin'),
-(5, 'test2', '$2y$10$wIXPQMMNki/FYRL4wQ82B.6g0U.haIvlf4WndzT2ao3xq0sqrWUFe', 'user');
+INSERT INTO `users` (`id`, `username`, `password`, `first_name`, `last_name`, `email`, `role`) VALUES
+(4, 'admin', '$2y$10$5JvOJ9nU.YJUTaLQngxFfuSEWzexstc3et5W333J9d8YHyb2257Ua', 'admin_f', 'admin_l', null, 'admin'),
+(5, 'test_user', '$2y$10$wIXPQMMNki/FYRL4wQ82B.6g0U.haIvlf4WndzT2ao3xq0sqrWUFe', 'test', 'user', 'angelad20000@gmail.com', 'user');
 
 --
 -- Indexes for dumped tables
