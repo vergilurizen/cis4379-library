@@ -17,8 +17,26 @@ $error   = "";
 $message = "";
 
 // handle status change requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['rental_id'], $_POST['new_status'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setDelivered'])) {
+
+    $rentalId  = (int)$_POST['rental_id'];
+    $newStatus = $_POST['new_status'];
+
+    // Use API endpoint to update rental status
+    $resp = callAPI('rentals.php', 'PUT', [
+        'rental_id' => $rentalId,
+        'status' => $newStatus
+    ]);
+
+    if (!empty($resp['success'])) {
+        $message = $resp['message'] ?? "Status updated.";
+    } else {
+        $error = $resp['message'] ?? "Error updating status.";
+    }
+}
+
+// handle status change requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setReturned'])) {
 
     $rentalId  = (int)$_POST['rental_id'];
     $newStatus = $_POST['new_status'];
@@ -53,9 +71,9 @@ if (!empty($response['success'])) {
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><h1>Rental Orders (Pickup Prep)</h1></header>
+<header><h1>Rental Orders</h1></header>
 
-<div class="container">
+<div class="container" id="orders-container">
   <p>
     Logged in as <strong><?= htmlspecialchars($_SESSION['user']['username']) ?></strong> (Admin)
   </p>
@@ -74,7 +92,7 @@ if (!empty($response['success'])) {
   <?php endif; ?>
 
   <?php if (!empty($orders)): ?>
-    <table class="table">
+    <table class="table" id="all-orders-table">
       <tr>
         <th>Order #</th>
         <th>User</th>
@@ -82,6 +100,8 @@ if (!empty($response['success'])) {
         <th>Author</th>
         <th>Category</th>
         <th>Borrowed Date</th>
+        <th>Due Date</th>
+        <th>Returned Date</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -92,20 +112,22 @@ if (!empty($response['success'])) {
           <td><?= htmlspecialchars($order['title']) ?></td>
           <td><?= htmlspecialchars($order['author']) ?></td>
           <td><?= htmlspecialchars($order['category']) ?></td>
-          <td><?= htmlspecialchars($order['borrowed_date']) ?></td>
+          <td><?= $order['borrowed_date'] ?></td>
+          <td><?= $order['due_date'] ?></td>
+          <td><?= $order['returned_date'] ?></td>
           <td><?= htmlspecialchars($order['status']) ?></td>
           <td>
             <?php if ($order['status'] === 'Pending'): ?>
               <form method="post" style="display:inline;">
                 <input type="hidden" name="rental_id" value="<?= (int)$order['rental_id'] ?>">
                 <input type="hidden" name="new_status" value="Delivered">
-                <button type="submit">Mark Delivered</button>
+                <button type="submit" name="setDelivered">Mark Delivered</button>
               </form>
             <?php elseif ($order['status'] === 'Delivered'): ?>
               <form method="post" style="display:inline;">
                 <input type="hidden" name="rental_id" value="<?= (int)$order['rental_id'] ?>">
                 <input type="hidden" name="new_status" value="Returned">
-                <button type="submit">Mark Returned</button>
+                <button type="submit" name="setReturned">Mark Returned</button>
               </form>
             <?php else: ?>
               Returned

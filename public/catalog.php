@@ -26,7 +26,8 @@ if (!isset($_SESSION['cart'])) {
 <p>
   <a href="logout.php">Logout</a> |
   <a href="cart.php">View Cart (<?= count($_SESSION['cart']) ?>)</a> |
-  <a href="my_rentals.php">My Rentals</a>
+  <a href="my_rentals.php">My Rentals</a> |
+  <a href="manage_account.php?id=<?= $_SESSION['user']['id'] ?>">Manage Account</a>
   <?php if ($_SESSION['user']['role'] == 'admin'): ?>
     | <a href="admin.php">Admin Panel</a>
     | <a href="admin_orders.php">View Orders</a>
@@ -34,7 +35,14 @@ if (!isset($_SESSION['cart'])) {
 </p>
 
 
-  <h2>Available Materials</h2>
+  <div class="table-header">
+    <div style="width:250px;"><h2>Available Materials</h2></div>
+    <div style="width:185px;"></div>
+    <form action="" method="GET" class="searchbar">
+      <input type="text" name="search" value="<?php if(isset($_GET['search'])) {echo $_GET['search'];} ?>" placeholder="Enter Keyword"/>
+      <button type='submit'>Search</button>
+    </form>
+  </div>
   <table class="table">
     <tr>
       <th>Title</th>
@@ -44,7 +52,10 @@ if (!isset($_SESSION['cart'])) {
     </tr>
     <?php
       // Use API endpoint to get available materials
-      $response = callAPI('materials.php?available=1', 'GET');
+      $response = callAPI('materials.php', 'GET', [
+        'available' => 1,
+        'search' => (isset($_GET['search']) ? $_GET['search'] : '')
+      ]);
       
       // Debug: Show error if API call failed
       if (!$response['success']) {

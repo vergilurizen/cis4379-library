@@ -10,9 +10,15 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $rawUsername = $_POST['username'] ?? '';
     $rawPassword = $_POST['password'] ?? '';
+    $rawFirstName = $_POST['firstName'] ?? '';
+    $rawLastName = $_POST['lastName'] ?? '';
+    $rawEmail = $_POST['email'] ?? '';
 
     $username = $rawUsername;
     $password = $rawPassword;
+    $firstName = $rawFirstName;
+    $lastName = $rawLastName;
+    $email = $rawEmail;
 
     // validate username and password
     if (!validate_username($username, $err)) {
@@ -23,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     if (empty($errors)) {
-        $response = db_register($username, $password, $conn);
+        $response = db_register($username, $password, $firstName, $lastName, $email, $conn);
 
         if ($response['success']) {
             $message = $response['message'] ?? "Account created successfully. You can now log in.";
@@ -46,14 +52,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <?php if (!empty($errors)): ?>
     <div class="alert alert-error">
       <?php foreach ($errors as $e): ?>
-        <p><?= htmlspecialchars($e) ?></p>
+        <p style='color:red;'><?= htmlspecialchars($e) ?></p>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
 
   <?php if (!empty($message) && empty($errors)): ?>
-    <div class="alert alert-success">
-      <p><?= htmlspecialchars($message) ?></p>
+    <div>
+      <p style='color:green;'><?= htmlspecialchars($message) ?></p>
     </div>
   <?php endif; ?>
 
@@ -64,6 +70,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       name="username" 
       required
       value="<?= isset($rawUsername) ? htmlspecialchars($rawUsername) : '' ?>"
+    >
+
+    <label>First Name</label>
+    <input 
+      type="text" 
+      name="firstName" 
+      required
+      value="<?= isset($rawFirstName) ? htmlspecialchars($rawFirstName) : '' ?>"
+    >
+
+    <label>Last Name</label>
+    <input 
+      type="text" 
+      name="lastName" 
+      required
+      value="<?= isset($rawLastName) ? htmlspecialchars($rawLastName) : '' ?>"
+    >
+
+    <label>Email</label>
+    <input 
+      type="text" 
+      name="email" 
+      required
+      value="<?= isset($rawEmail) ? htmlspecialchars($rawEmail) : '' ?>"
     >
 
     <label>Password</label>

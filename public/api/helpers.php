@@ -131,8 +131,8 @@ function callAPI($endpoint, $method = 'GET', $data = null) {
                     $id = isset($queryParams['id']) ? $queryParams['id'] : $data['id'];
                     $result = db_get_material($id, $conn);
                 } else {
-                    $availableOnly = isset($queryParams['available']) && $queryParams['available'] == '1';
-                    $result = db_get_materials($conn, $availableOnly);
+                    $availableOnly = isset($data['available']) && $data['available'] == '1';
+                    $result = db_get_materials($conn, $data['search'], $availableOnly);
                 }
                 return $result;
             } else if ($method === 'POST') {
@@ -140,6 +140,17 @@ function callAPI($endpoint, $method = 'GET', $data = null) {
                     return ['success' => false, 'data' => null, 'message' => 'Title, author, and category required'];
                 }
                 return db_add_material($data['title'], $data['author'], $data['category'], $conn);
+            } else if ($method === 'DELETE') {
+                if (!isset($data['id'])) {
+                    return ['success' => false, 'data' => null, 'message' => 'Id required'];
+                }
+                return db_delete_material($data['id'], $conn);
+            } else if ($method === 'PUT') {
+                if (!isset($data['id'])) {
+                    return ['success' => false, 'data' => null, 'message' => 'Id required'];
+                }
+
+                return db_update_material($data['id'], $data['title'], $data['author'], $data['category'], $data['available'], $conn);
             }
             break;
             
@@ -181,6 +192,7 @@ function callAPI($endpoint, $method = 'GET', $data = null) {
                     return ['success' => false, 'data' => null, 'message' => 'Material IDs array required'];
                 }
                 $userId = intval($_SESSION['user']['id']);
+
                 return db_rent_materials($userId, $data['material_ids'], $conn);
             } else if ($method === 'PUT') {
                 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {

@@ -10,7 +10,21 @@ header('Content-Disposition: attachment; filename=materials_report.csv');
 $output = fopen('php://output', 'w');
 fputcsv($output, ['ID', 'Title', 'Author', 'Category', 'Available']);
 
-$result = mysqli_query($conn, "SELECT * FROM materials");
+$result = mysqli_query($conn, 
+  "SELECT 
+	  id,
+    title,
+    author,
+    category,
+    (
+        CASE
+        	WHEN available THEN 'Available'
+        	ELSE 'Unavailable'
+       	END
+    )
+  FROM materials 
+  WHERE available <> 2; "
+);
 while ($row = mysqli_fetch_assoc($result)) {
   fputcsv($output, $row);
 }

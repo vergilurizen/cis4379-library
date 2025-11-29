@@ -53,6 +53,10 @@ nav a:hover {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+#orders-container {
+  max-width: 1300px;
+}
+
 /*Forms*/
 input, button {
   width: 100%;
@@ -61,6 +65,10 @@ input, button {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+input[type="text"], input[type="password"] {
+  margin-bottom: 15px;
 }
 
 button {
@@ -77,6 +85,107 @@ button:hover {
   background: #a12854;
 }
 
+#materialEditBtn, #materialDeleteBtn {
+  background: var(--primary-maroon);
+  color: var(--text-light);
+}
+
+#materialEditBtn:hover, #materialDeleteBtn:hover {
+  background: #a128;
+  color: white;
+}
+
+#materialEditBtn {
+  width: 40%;
+  margin-right: 10px;
+}
+
+#materialDeleteBtn {
+  width: 50%;
+}
+
+#addMaterialForm {
+  margin-bottom: 3rem;
+}
+
+/* Search boxes */
+.table-header div{
+  display: inline-block;
+}
+
+.table-header form{
+  display: inline-block;
+  padding: 0;
+  margin-top: -10px;
+  margin-bottom: -60px;
+}
+
+.table-header:last-child {
+  float: right;
+}
+
+.searchbar input {
+  display:inline-block;
+  width: 250px;
+}
+
+.searchbar button {
+  display: inline-block;
+  width: auto;
+}
+
+/* Material Editor */
+.materialEditor {
+  background:#ddd;
+  position:absolute;
+  width: 600px;
+  /*padding: 2rem;*/
+  margin-top: 4rem;
+  margin-left: 100px;
+  text-align: center;
+  padding-bottom: 2rem;
+  border-radius: 8px;
+  border: #333;
+  border-width: 20px;
+}
+.materialEditor h3 {
+  color: var(--primary-blue);
+}
+#editForm /*input[type="text"]*/ {
+  width: 80%;
+  padding: 8px;
+  margin-bottom: 5rem;
+  box-sizing: border-box;
+  text-align:left;
+  margin:auto;
+}
+
+#editForm input {
+  width: 95%;
+}
+
+#editForm button {
+  width:40%;
+  margin:auto;
+  background: var(--primary-maroon);
+}
+
+#editForm button:hover {
+  background: #a128;
+  color: white;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.form-buttons button {
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
 /*Tables*/
 .table {
   width: 100%;
@@ -91,6 +200,12 @@ button:hover {
   background: var(--primary-blue);
   color: var(--text-light);
   text-align: left;
+}
+
+#all-orders-table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 a {
