@@ -5,6 +5,51 @@
  * No HTTP/cURL needed - just include and call!
  */
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+require './vendor/phpmailer/phpmailer/src/Exception.php';
+require './vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require './vendor/phpmailer/phpmailer/src/SMTP.php';
+
+/**
+ * Email User with order status
+ */
+function send_status($userId, $orderId, $subject, $message, $conn) {
+    $mail = new PHPMailer(true);
+
+    // Load user info
+    $userSql = "SELECT * FROM users WHERE id=$userId";
+    $user = mysqli_query($conn, $userSql);
+    if (mysqli_num_rows($user) == 1) {
+        $user = mysqli_fetch_assoc($user);
+    } else {
+        return;
+    }
+
+    try {
+        //Server settings
+        $mail->isSMTP();                                            // Send using SMTP
+        $mail->Host       = 'smtp.gmail.com';                       // Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+        $mail->Username   = 'libraryinventorysystem@gmail.com';     // SMTP username
+        $mail->Password   = 'qrtf cxmo lace edsz';                  // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+        $mail->Port       = 587;                                    // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
+
+        //Recipients
+        $mail->setFrom('libraryinventorysystem@gmail.com', 'Library Inventory System');
+        $mail->addAddress($user['email'], $user['first_name'] . ' ' . $user['last_name']);     // Add a recipient
+
+        //Content
+        $mail->isHTML(true);                                  // Set email format to HTML
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+
+        $mail->send();
+    } catch (Exception $e) {
+    }
+}
+
 /**
  * User Authentication - Login
  */
@@ -40,8 +85,10 @@ function db_login($username, $password, $conn) {
 /**
  * User Registration
  */
-function db_register($username, $password, $conn) {
+function db_register($username, $password, $firstName, $lastName, $email, $conn) {
     $username = htmlspecialchars(strip_tags(trim($username)));
+    $firstName = htmlspecialchars(strip_tags(trim($firstName)));
+    $lastName = htmlspecialchars(strip_tags(trim($lastName)));
     
     // Check if username exists
     $check = "SELECT * FROM users WHERE username='$username'";
@@ -59,7 +106,7 @@ function db_register($username, $password, $conn) {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert new user
-    $insert = "INSERT INTO users (username, password, role) VALUES ('$username', '$hashedPassword', 'user')";
+    $insert = "INSERT INTO users (username, password, first_name, last_name, email, role) VALUES ('$username', '$hashedPassword', '$firstName', '$lastName', '$email', 'user')";
     if (mysqli_query($conn, $insert)) {
         return [
             'success' => true,
@@ -76,14 +123,101 @@ function db_register($username, $password, $conn) {
 }
 
 /**
+ * Update User Account
+ */
+function db_update_account($id, $username, $firstName, $lastName, $email, $conn) {
+    $username = htmlspecialchars(strip_tags(trim($username)));
+    $firstName = htmlspecialchars(strip_tags(trim($firstName)));
+    $lastName = htmlspecialchars(strip_tags(trim($lastName)));
+    
+    // Check if user exists
+    $check = "SELECT * FROM users WHERE id='$id'";
+    $result = mysqli_query($conn, $check);
+    
+    if (mysqli_num_rows($result) == 0) {
+        return [
+            'success' => false,
+            'data' => null,
+            'message' => 'User not found'
+        ];
+    }
+
+    // Update account info
+    $update = "UPDATE users SET username='$username', first_name='$firstName', last_name='$lastName', email='$email' WHERE id='$id'";
+    if (mysqli_query($conn, $update)) {
+        // Reload session info
+        $sql = "SELECT * FROM users WHERE id='$id'";
+        $result = mysqli_query($conn, $sql);
+
+        if (mysqli_num_rows($result) == 1) {
+            $user = mysqli_fetch_assoc($result);
+            $_SESSION['user'] = $user;
+        }
+
+        return [
+            'success' => true,
+            'data' => null,
+            'message' => 'Account updated successfully'
+        ];
+    } else {
+        return [
+            'success' => false,
+            'data' => null,
+            'message' => 'Error updating account: ' . mysqli_error($conn)
+        ];
+    }
+}
+
+function db_change_password($id, $oldPassword, $newPassword, $conn) {    
+    // Check for user's existence 
+    $sql = "SELECT * FROM users WHERE id='$id'";
+    $result = mysqli_query($conn, $sql);
+
+    if (mysqli_num_rows($result) == 1) {
+        $user = mysqli_fetch_assoc($result);
+
+        // Verify the entered password against the stored hash ***
+        if (password_verify($oldPassword, $user['password'])) {
+            // Hash new password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+            // Update password
+            $update = "UPDATE users SET password='$hashedPassword' WHERE id='$id'";
+            if (mysqli_query($conn, $update)) {
+                return [
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Password updated!'
+                ];
+            }
+
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Could not update password'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Incorrect password, please try again.'
+            ];
+        }
+    }
+
+    // If no user or password_verify fails:
+    return [
+        'success' => false,
+        'data' => null,
+        'message' => 'User not found'
+    ];
+}
+
+/**
  * Get all materials
  */
-function db_get_materials($conn, $availableOnly = false) {
-    if ($availableOnly) {
-        $sql = "SELECT * FROM materials WHERE available=1";
-    } else {
-        $sql = "SELECT * FROM materials";
-    }
+function db_get_materials($conn, $search = "", $availableOnly = false) {
+    $sql = "SELECT * FROM materials WHERE CONCAT(title,author,category) LIKE '%$search%' and available <> 2" . ($availableOnly ? " and available=1" : "");
     
     $result = mysqli_query($conn, $sql);
     $materials = [];
@@ -104,7 +238,7 @@ function db_get_materials($conn, $availableOnly = false) {
  */
 function db_get_material($id, $conn) {
     $id = intval($id);
-    $sql = "SELECT * FROM materials WHERE id=$id";
+    $sql = "SELECT * FROM materials WHERE id=$id AND available <> 2";
     $result = mysqli_query($conn, $sql);
     
     if ($result && mysqli_num_rows($result) === 1) {
@@ -162,7 +296,7 @@ function db_add_material($title, $author, $category, $conn) {
                 'category' => $category,
                 'affected_rows' => $affected
             ],
-            'message' => "Material added successfully! (ID: $newId, Rows affected: $affected)"
+            'message' => "Material added successfully!"
         ];
     } else {
         return [
@@ -234,7 +368,7 @@ function db_delete_material($id, $conn) {
     }
     
     $id = intval($id);
-    $sql = "DELETE FROM materials WHERE id=$id";
+    $sql = "UPDATE materials SET available=2 WHERE id=$id";
     
     if (mysqli_query($conn, $sql)) {
         if (mysqli_affected_rows($conn) > 0) {
@@ -313,6 +447,20 @@ function db_rent_materials($userId, $materialIds, $conn) {
         ];
     }
 
+    // Ensure user won't have more than 3 items rented
+    $rentCountSql = "SELECT count(*) from borrowed_materials where user_id = $userId and status <> 'Returned'";
+    $rentCountResult = mysqli_query($conn, $rentCountSql);
+
+    while($row = mysqli_fetch_assoc($rentCountResult)) {
+        if(intval($row['count(*)']) + count($ids) > 3) {
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Only 3 items can be checked out at a time.'
+            ];
+        }
+    }
+
     $errors = [];
 
     foreach ($ids as $mid) {
@@ -347,6 +495,21 @@ function db_rent_materials($userId, $materialIds, $conn) {
             $errors[] = "Error updating availability for material $mid: " . mysqli_error($conn);
         }
     }
+
+    // Load user info
+    $userSql = "SELECT * FROM users WHERE id=$userId";
+    $user = mysqli_query($conn, $userSql);
+    if (mysqli_num_rows($user) == 1) {
+        $user = mysqli_fetch_assoc($user);
+    } else {
+        return;
+    }
+
+    // Send email to user with order details
+    $msg = 'Dear ' . $user['first_name'] . ',</p>' .
+    '<p>Your material rental has been confirmed. Please pick it up at:</p>' .
+    '<p>TAMUCT Library, 1001 Leadership Pl, WH-101, Killeen, TX 76549</p>';
+    send_status($userId, $conn->insert_id, 'Rental Confirmation', $msg, $conn);
 
     if (empty($errors)) {
         return [
@@ -412,8 +575,10 @@ function db_get_all_rentals($conn) {
     $sql = "
         SELECT 
             bm.id AS rental_id,
-            bm.borrowed_date,
+            DATE(bm.borrowed_date) as borrowed_date,
             bm.status,
+            DATE(bm.due_date) as due_date,
+            DATE(bm.returned_date) as returned_date,
             m.id AS material_id,
             m.title,
             m.author,
@@ -477,7 +642,7 @@ function db_update_rental_status($rentalId, $newStatus, $conn) {
     }
 
     // Load current rental
-    $selectSql = "SELECT status, material_id FROM borrowed_materials WHERE id = $rentalId";
+    $selectSql = "SELECT status, material_id, user_id FROM borrowed_materials WHERE id = $rentalId";
     $selectRes = mysqli_query($conn, $selectSql);
     if ($selectRes === false || mysqli_num_rows($selectRes) !== 1) {
         return [
@@ -490,6 +655,15 @@ function db_update_rental_status($rentalId, $newStatus, $conn) {
     $row = mysqli_fetch_assoc($selectRes);
     $currentStatus = $row['status'];
     $materialId = intval($row['material_id']);
+
+    // Load user info
+    $userSql = "SELECT * FROM users WHERE id=" . $row['user_id'];
+    $user = mysqli_query($conn, $userSql);
+    if (mysqli_num_rows($user) == 1) {
+        $user = mysqli_fetch_assoc($user);
+    } else {
+        return;
+    }
 
     // Check allowed transitions
     $valid = false;
@@ -509,15 +683,42 @@ function db_update_rental_status($rentalId, $newStatus, $conn) {
         ];
     }
 
-    // Update rental status
-    $updateSql = "UPDATE borrowed_materials SET status = '$newStatus' WHERE id = $rentalId";
-    $updateRes = mysqli_query($conn, $updateSql);
-    if ($updateRes === false) {
-        return [
-            'success' => false,
-            'data' => null,
-            'message' => 'Error updating status: ' . mysqli_error($conn)
-        ];
+    // Update rental status to delivered
+    if($newStatus === 'Delivered') {
+        $updateSql = "UPDATE borrowed_materials SET status = '$newStatus', delivered_date = NOW(), due_date = DATE_ADD(NOW(), INTERVAL 14 DAY) WHERE id = $rentalId";
+        $updateRes = mysqli_query($conn, $updateSql);
+        if ($updateRes === false) {
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Error updating status: ' . mysqli_error($conn)
+            ];
+        }
+
+        // Send email to user that order was delivered
+        $date = new DateTime('now'); 
+        $date->modify('+2 weeks');
+
+        $msg = 'Dear ' . $user['first_name'] . ',</p>' .
+        '<p>Your material rental has been delivered. It is due on ' . $date->format('Y-m-d') . '. Please return to:</p>' .
+        '<p>TAMUCT Library, 1001 Leadership Pl, WH-101, Killeen, TX 76549</p>';
+        send_status($user['id'], $conn->insert_id, 'Rental Delivery', $msg, $conn);
+    }
+    // Update rental status to returned
+    if($newStatus === 'Returned') {
+        $updateSql = "UPDATE borrowed_materials SET status = '$newStatus', returned_date = NOW() WHERE id = $rentalId";
+        $updateRes = mysqli_query($conn, $updateSql);
+        if ($updateRes === false) {
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Error updating status: ' . mysqli_error($conn)
+            ];
+        }
+
+        $msg = 'Dear ' . $user['first_name'] . ',</p>' .
+        '<p>Your material rental has been returned. We hope to see you again!</p>';
+        send_status($user['id'], $conn->insert_id, 'Rental Return', $msg, $conn);
     }
 
     // If returned, make the material available again
